@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# Sample additional script. Modify to your heart's content or supply your own.
+
+echo 'Sample additional script ran successfully.' | tee /tmp/sample_additional_script
