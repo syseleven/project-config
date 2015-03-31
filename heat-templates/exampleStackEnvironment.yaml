@@ -1,0 +1,6 @@
+parameters:
+  public_net_id: dc4d2dfb-f8d2-461c-9f16-636edbf99a0f
+  config_repo: git@gitlab.syseleven.de:cloudstrap/project-config.git
+  key_name: demokey_jpe
+
+

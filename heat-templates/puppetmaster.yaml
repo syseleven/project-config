@@ -1,0 +1,86 @@
+heat_template_version: 2014-10-16
+
+description: >
+ puppetmaster node 
+parameters:
+  init_script:
+    type: string
+    description: init script
+  public_net:
+    type: string
+    description: id of the management net
+  mgm_net:
+    type: string
+    description: id of the management net
+  key_name:
+    type: string
+    description: Name of keypair to assign to servers
+  image:
+    type: string
+    default: Ubuntu 14.04 sys11-cloudimg amd64
+    description: Name of image to use for servers
+  flavor:
+    type: string
+    default: m1.tiny
+    description: Flavor to use for nodes
+  public_net_id:
+    type: string
+    default: dc4d2dfb-f8d2-461c-9f16-636edbf99a0f
+    description: ID of public network for which floating IP addresses will be allocated
+
+resources:
+  ### Puppet Master Node ###
+  ##########################
+  puppetmaster:
+    type: OS::Nova::Server
+    properties:
+      name: puppetmaster
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      config_drive: 'true'
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: puppetmaster_public_port }
+        - port: { get_resource: puppetmaster_port }
+      metadata:
+        project_classes: true
+        puppetmaster: puppetmaster.local
+        sys11_topics: "ssh base puppet-master puppet-agent"
+        stack_name: { get_param: 'OS::stack_name' }
+      user_data_format: RAW  # Leave this in.
+      user_data: { get_param: init_script }
+
+  allow_puppet:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      description: allow incoming puppet traffic from anywhere.
+      name: puppet incoming
+      rules: [{direction: ingress, remote_ip_prefix: 0.0.0.0/0, port_range_min: 8140, port_range_max: 8140, protocol: tcp} ]
+
+  allow_ssh:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      description: allow incoming ssh traffic from anywhere.
+      name: ssh incoming
+      rules: [{direction: ingress, remote_ip_prefix: 0.0.0.0/0, port_range_min: 22, port_range_max: 22, protocol: tcp} ]
+
+  puppetmaster_public_port:
+    type: OS::Neutron::Port
+    properties:
+      security_groups: [ {get_resource: allow_ssh} ]
+      network_id: { get_param: public_net }
+
+  puppetmaster_port:
+    depends_on: puppetmaster_public_port # public port should be bound to eth0
+    type: OS::Neutron::Port
+    properties:
+      security_groups: [ {get_resource: allow_puppet}, {get_resource: allow_ssh} ]
+      network_id: { get_param: mgm_net }
+
+  puppetmaster_floating_ip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network_id: { get_param: public_net_id }
+      port_id: { get_resource: puppetmaster_public_port }
+
+## ToDo: öffentliches und privates Netz sauber trennen.
