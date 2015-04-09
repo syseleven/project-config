@@ -1,0 +1,207 @@
+# HOT template
+#
+# 2015, j.grassler@syseleven.de
+# 
+# Invocation example: heat stack-create -f sensu-master-agent.yaml -P key_name=mykey -P deploy_key="$(cat ~/.ssh/deploy_key)" sensu-master-agent
+# 
+heat_template_version: 2014-10-16
+
+description: >
+  This creates three VMs (puppetmaster, sensu-client and sensu-server)
+  configured Syseleven's Cloudstrap bootstrapping system.
+  
+parameters:
+  key_name:
+    type: string
+    description: Name of keypair to assign to servers
+  image:
+    type: string
+    default: Ubuntu 14.04 sys11-cloudimg amd64
+    description: Name of image to use for servers
+  flavor:
+    type: string
+    default: m1.tiny
+    description: Flavor to use for nodes
+  public_net_id:
+    type: string
+    default: dc4d2dfb-f8d2-461c-9f16-636edbf99a0f
+    description: ID of public network for which floating IP addresses will be allocated
+
+  # Parameters for sys11::cloudstrap
+
+  ## General parameters
+
+  additional_script:
+    type: string
+    description: Script to run after initialize_instance
+    default: ''
+
+  deploy_key:
+    type: string
+    description: SSH private key required to access repositories
+    hidden: true
+
+  override_yaml:
+    type: string
+    description: Top-level overrides for Hiera configuration.
+    default: ''
+
+
+  ## Repository parameters
+
+  sys11_config_repo:
+    description: Git repository containing cloud configuration
+    default: https://github.com/syseleven/sys11-config.git
+    type: string
+
+  sys11_config_branch:
+    description: Git branch to use in config repository
+    default: master
+    type: string
+
+  config_repo:
+    description: Git repository containing project specific cloud configuration
+    default: https://github.com/syseleven/project-config.git
+    type: string
+
+  config_branch:
+    description: Git branch to use in project specific config repository
+    default: master
+    type: string
+
+  repodeploy_repo:
+    description: Git repository to use for sys11puppet module
+    type: string
+    default: https://github.com/syseleven/puppet-repodeploy.git
+
+  repodeploy_branch:
+    description: Git branch to use in repodeploy repository
+    default: master
+    type: string
+
+  scripts_repo:
+    description: Git repository containing node scripts scripts
+    default: https://github.com/syseleven/bootstrap-scripts.git
+    type: string
+
+  scripts_branch:
+    description: Git branch to use in config repository
+    default: master
+    type: string
+
+
+resources:
+
+  ### Creates a Neutron network and subnet
+
+  network:
+    type: sys11::network::v1
+    properties:
+      name:
+        list_join:
+          - '_'
+          - [ heat, { get_param: 'OS::stack_name' } ]
+
+  
+  ### Generates a user-data script that runs the Syseleven bootstrapping scripts
+
+  bootstrap:
+    type: sys11::cloudstrap::v4
+    properties:
+      additional_script: { get_param: additional_script }
+      sys11_config_repo: { get_param: sys11_config_repo }
+      sys11_config_branch: { get_param: sys11_config_branch }
+      config_repo: { get_param: config_repo }
+      config_branch: { get_param: config_branch }
+      deploy_key: { get_param: deploy_key }
+      override_yaml: { get_param: override_yaml }
+      repodeploy_repo: { get_param: repodeploy_repo }
+      repodeploy_branch: { get_param: repodeploy_branch }
+      scripts_repo: { get_param: scripts_repo }
+      scripts_branch: { get_param: scripts_branch }
+      deploy_key: { get_param: deploy_key }
+
+
+  ### Sensu server
+
+  puppetmaster:
+    type: OS::Nova::Server
+    properties:
+      name: puppetmaster
+      config_drive: true
+      flavor: { get_param: flavor }
+      image: { get_param: image }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_attr: [ puppetmaster_port, port ] }
+      metadata:
+        stack_name: { get_param: 'OS::stack_name' }
+        floating_ip: { get_attr: [ puppetmaster_port, floating_ip_address ] }
+        sys11_topics: "base firewall ssh puppet-master puppet-agent"
+        puppet_master: puppetmaster.local
+        project_classes: true
+      user_data: { get_attr: [ bootstrap, script ] }
+      user_data_format: RAW
+
+  puppetmaster_port:
+    type: sys11::floatport::v1
+    properties:
+      public_net: { get_param: public_net_id }
+      internal_net: { get_attr: [ network, network ] }
+
+
+  sensu-server:
+    type: OS::Nova::Server
+    properties:
+      name: sensu-server
+      config_drive: true
+      flavor: { get_param: flavor }
+      image: { get_param: image }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_attr: [ sensu-server_port, port ] }
+      metadata:
+        stack_name: { get_param: 'OS::stack_name' }
+        floating_ip: { get_attr: [ sensu-server_port, floating_ip_address ] }
+        project_classes: false
+        puppet_master: puppetmaster.local
+        sys11_topics: "puppet-agent base ssh firewall"
+      user_data: { get_attr: [ bootstrap, script ] }
+      user_data_format: RAW
+
+  sensu-server_port:
+    type: sys11::floatport::v1
+    properties:
+      public_net: { get_param: public_net_id }
+      internal_net: { get_attr: [ network, network ] }
+
+
+  sensu-client:
+    type: OS::Nova::Server
+    properties:
+      name: sensu-client
+      config_drive: true
+      flavor: { get_param: flavor }
+      image: { get_param: image }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_attr: [ sensu-client_port, port ] }
+      metadata:
+        stack_name: { get_param: 'OS::stack_name' }
+        floating_ip: { get_attr: [ sensu-client_port, floating_ip_address ] }
+        project_classes: false
+        puppet_master: puppetmaster.local
+        sys11_topics: "puppet-agent base ssh firewall"
+      user_data: { get_attr: [ bootstrap, script ] }
+      user_data_format: RAW
+
+  sensu-client_port:
+    type: sys11::floatport::v1
+    properties:
+      public_net: { get_param: public_net_id }
+      internal_net: { get_attr: [ network, network ] }
+
+
+outputs:
+  floating_ip: 
+    value: { get_attr: [ puppetmaster_port, floating_ip_address ] }
