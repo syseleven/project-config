@@ -141,6 +141,12 @@ parameters with values differing from those in sys11-config need to (and
 should) be included here. Anything not set explicitely will inherit the default
 values from sys11-config.*
 
+heat-templates
+--------------
+
+This directory contains a variety of Heat templates suitable for use with
+Cloudstrap.
+
 Configuration Hierarchy
 =======================
 
