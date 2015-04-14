@@ -105,7 +105,7 @@ resources:
   ### Generates a user-data script that runs the Syseleven bootstrapping scripts
 
   bootstrap:
-    type: sys11::cloudstrap::v2
+    type: sys11::cloudstrap::v4
     properties:
       additional_script: { get_param: additional_script }
       sys11_config_repo: { get_param: sys11_config_repo }
