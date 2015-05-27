@@ -7,7 +7,8 @@
 heat_template_version: 2014-10-16
 
 description: >
-  This template deploys a sensu server with a masterless puppet setup.
+  This template deploys a sensu server with a masterless puppet setup, set up
+  by Syseleven's Cloudstrap bootstrapping system.
   
 parameters:
   key_name:
