@@ -28,13 +28,6 @@ parameters:
 
   # Parameters for sys11::cloudstrap
 
-  ## General parameters
-
-  additional_script:
-    type: string
-    description: Script to run after initialize_instance
-    default: ''
-
   deploy_key:
     type: string
     description: SSH private key required to access repositories
@@ -45,19 +38,6 @@ parameters:
     description: Top-level overrides for Hiera configuration.
     default: ''
 
-
-  ## Repository parameters
-
-  sys11_config_repo:
-    description: Git repository containing cloud configuration
-    default: https://github.com/syseleven/sys11-config.git
-    type: string
-
-  sys11_config_branch:
-    description: Git branch to use in config repository
-    default: master
-    type: string
-
   config_repo:
     description: Git repository containing project specific cloud configuration
     default: https://github.com/syseleven/project-config.git
@@ -67,27 +47,6 @@ parameters:
     description: Git branch to use in project specific config repository
     default: master
     type: string
-
-  repodeploy_repo:
-    description: Git repository to use for puppet-repodeploy module
-    type: string
-    default: https://github.com/syseleven/puppet-repodeploy.git
-
-  repodeploy_branch:
-    description: Git branch to use in repodeploy repository
-    default: master
-    type: string
-
-  scripts_repo:
-    description: Git repository containing Cloudstrap bootstrap scripts
-    default: https://github.com/syseleven/bootstrap-scripts.git
-    type: string
-
-  scripts_branch:
-    description: Git branch to use in config repository
-    default: master
-    type: string
-
 
 resources:
 
@@ -107,19 +66,10 @@ resources:
   bootstrap:
     type: sys11::cloudstrap::v4
     properties:
-      additional_script: { get_param: additional_script }
-      sys11_config_repo: { get_param: sys11_config_repo }
-      sys11_config_branch: { get_param: sys11_config_branch }
       config_repo: { get_param: config_repo }
       config_branch: { get_param: config_branch }
       deploy_key: { get_param: deploy_key }
       override_yaml: { get_param: override_yaml }
-      repodeploy_repo: { get_param: repodeploy_repo }
-      repodeploy_branch: { get_param: repodeploy_branch }
-      scripts_repo: { get_param: scripts_repo }
-      scripts_branch: { get_param: scripts_branch }
-      deploy_key: { get_param: deploy_key }
-
 
   ### Sensu server
 

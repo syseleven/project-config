@@ -7,11 +7,11 @@ This directory contains the following example heat templates:
 
 You can instantiate these stacks by issuing a
 
-  `heat stack-create -f sensu-masterless.yaml -P deploy_key=$(cat <my_deploy_key>) -P key_name=<my_nova_keypair_name> -P public_net_id=dc4d2dfb-f8d2-461c-9f16-636edbf99a0f my-masterless-stack`
+  `heat stack-create -f sensu-masterless.yaml -P deploy_key=$(cat <my_deploy_key>) -P key_name=<my_nova_keypair_name> my-masterless-stack`
 
 for the masterless puppet setup, and
   
-  `heat stack-create -f sensu-master-agent.yaml -P deploy_key=$(cat <my_deploy_key>) -P key_name=<my_nova_keypair_name> -P public_net_id=dc4d2dfb-f8d2-461c-9f16-636edbf99a0f my-master-agent-stack`
+  `heat stack-create -f sensu-master-agent.yaml -P deploy_key=$(cat <my_deploy_key>) -P key_name=<my_nova_keypair_name> my-master-agent-stack`
 
 for the Puppet master/agent setup. Substitute the path to your deploy key for `<my_deploy_key>` and your Nova keypair name for `<my_nova_keypair_name>`.
 
@@ -23,5 +23,5 @@ heat templates:
   `scloud --config-file ~/.scloud.conf --config-file sensu-masterless.conf`
   `scloud --config-file ~/.scloud.conf --config-file sensu-master-agent.conf`
 
-This assumes you configured sensible defaults for the `key_name`, `deploy_key`
-and `public_net_id` parameters in ~/.scloud.conf.
+This assumes you configured sensible defaults for the `key_name` and
+`deploy_key` parameters in ~/.scloud.conf.
