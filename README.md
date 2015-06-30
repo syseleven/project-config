@@ -28,10 +28,20 @@ scripts.d may contain user-supplied scripts.
 scripts.d/
 ----------
 
-This directory may contain user supplied scripts to be run after bootstrapping.
-The script ``scripts.d/additional`` will be run automatically if it exists
-and is executable. It may expect the following environment variables to be
-present:
+This directory contains bootstrap stages to be executed by initialize_instance.
+Scripts are numbered to control the order they are executed in (think sysvinit
+styles rc.d/ directories).  You may place additional bootstrapping scripts in
+your project-config repository
+
+For numbering your own scripts there are two rules: 
+
+* Numbers must be written in three-digit format (e.g. '015' instead of '15')
+
+* Multiples of 20, including '000' (e.g. '000', '020', '040') are reserved for
+  Syseleven's use. Apart from that anything goes (just pick a number that will
+  insert your own script between the desired Syseleven scripts.
+
+Scripts in scripts.d may expect the following environment variables to be present:
 
 * ``config_dir``          The directory this repository has been checked out to.
 * ``scripts_dir``         The directory the Syseleven provided bootstrap-scripts repository has been checked out to.
