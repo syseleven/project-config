@@ -23,9 +23,9 @@ configuration from their counterparts in the sys11-config repository.
 nodes.d and nodetype.d contain node or node type specific configuration that is
 pulled in on the basis of the ::fqdn and ::nodetype facts.
 
-scripts.d may contain user-supplied scripts.
+bootstrap.d may contain user-supplied scripts.
 
-scripts.d/
+bootstrap.d/
 ----------
 
 This directory contains bootstrap stages to be executed by initialize_instance.
@@ -41,7 +41,7 @@ For numbering your own scripts there are two rules:
   Syseleven's use. Apart from that anything goes (just pick a number that will
   insert your own script between the desired Syseleven scripts.
 
-Scripts in scripts.d may expect the following environment variables to be present:
+Scripts in bootstrap.d may expect the following environment variables to be present:
 
 * ``config_dir``          The directory this repository has been checked out to.
 * ``scripts_dir``         The directory the Syseleven provided bootstrap-scripts repository has been checked out to.
