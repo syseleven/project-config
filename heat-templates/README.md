@@ -7,13 +7,18 @@ This directory contains the following example heat templates:
 
 You can instantiate these stacks by issuing a
 
-  `heat stack-create -f sensu-masterless.yaml -P deploy_key=$(cat <my_deploy_key>) -P key_name=<my_nova_keypair_name> my-masterless-stack`
+  `heat stack-create -f sensu-masterless.yaml -P key_name=<my_nova_keypair_name> -P deploy_key="$(cat <my_deploy_key>)" -P config_repo=<my_project-config_git_fork> sensu-masterless`
 
 for the masterless puppet setup, and
   
-  `heat stack-create -f sensu-master-agent.yaml -P deploy_key=$(cat <my_deploy_key>) -P key_name=<my_nova_keypair_name> my-master-agent-stack`
+  `heat stack-create -f sensu-master-agent.yaml -P key_name=<my_nova_keypair_name> -P deploy_key="$(cat <my_deploy_key>)" -P config_repo=<my_project-config_git_fork> sensu-master-agent`
 
-for the Puppet master/agent setup. Substitute the path to your deploy key for `<my_deploy_key>` and your Nova keypair name for `<my_nova_keypair_name>`.
+for the Puppet master/agent setup. 
+
+`<my_deploy_key>` is your SSH private deployment key on the jumphost, for example ~/.ssh/deploy.key
+`<my_nova_keypair_name>` is the name of the SSH Keypair in nova, for example "mykey"
+`<my_project-config_git_fork>` is the fork of project-config specific to your client, for example "git@gitlab.syseleven.de:mycustomer/project-config.git"
+
 
 If you would like to use Syseleven's
 [scloud](https://github.com/syseleven/python-cloudutils) utility, you can
