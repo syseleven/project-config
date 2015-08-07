@@ -2,8 +2,8 @@
 #
 # 2015, j.grassler@syseleven.de
 # 
-# Invocation example: heat stack-create -f sensu-masterless.yaml -P  -P key_name=mykey -P deploy_key="$(cat ~/.ssh/deploykey)" sensu-masterless
-# 
+# Invocation example: heat stack-create -f sensu-masterless.yaml -P key_name=mykey -P deploy_key="$(cat ~/.ssh/deploykey)" -P config_repo="git@gitlab.syseleven.de:cloudstrap/project-config.git" sensu-masterless
+# Use client specific git repository
 heat_template_version: 2014-10-16
 
 description: >
