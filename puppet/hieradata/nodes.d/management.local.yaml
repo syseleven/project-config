@@ -1,0 +1,5 @@
+classes:
+  - sys11sensu::role::server
+  - sys11sensu::role::client
+
+
