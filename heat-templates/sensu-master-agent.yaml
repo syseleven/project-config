@@ -57,18 +57,45 @@ resources:
   ### Creates a Neutron network and subnet
 
   network:
-    type: sys11::network::v1
+    type: sys11::network::v3
     properties:
+      router: { get_resource: router }
       name:
         list_join:
           - '_'
           - [ heat, { get_param: 'OS::stack_name' } ]
 
   
+  # Creates a Neutron router for floating IPs and/or SNAT.
+
+  router:
+    type: OS::Neutron::Router
+    properties:
+      name:
+        list_join:
+          - '_'
+          - [ 'router', 'heat', { get_param: 'OS::stack_name' } ]
+      external_gateway_info:
+        network: { get_param: public_net_id }
+
+
+  ### Security group for SSH access from outside
+  #   (Add your own rule for allowing access to Uchiwa from outside or tunnel it
+  #    through SSH).
+
+  allow_ssh:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      description: "Allow inbound SSH traffic"
+      name: allow ssh from anywhere
+      rules: 
+        - { direction: ingress, remote_ip_prefix: 0.0.0.0/0, protocol: tcp, port_range_min: 22, port_range_max: 22 }
+ 
+
   ### Generates a user-data script that runs the Syseleven bootstrapping scripts
 
   bootstrap:
-    type: sys11::cloudstrap::v4
+    type: sys11::cloudstrap::v5
     properties:
       config_repo: { get_param: config_repo }
       config_branch: { get_param: config_branch }
@@ -98,10 +125,12 @@ resources:
       user_data_format: RAW
 
   puppetmaster_port:
-    type: sys11::floatport::v1
+    type: sys11::floatport::v3
     properties:
       public_net: { get_param: public_net_id }
-      internal_net: { get_attr: [ network, network ] }
+      internal_net: { get_resource: network }
+      security_groups: 
+        - { get_resource: allow_ssh }
 
 
   sensu-server:
@@ -124,10 +153,12 @@ resources:
       user_data_format: RAW
 
   sensu-server_port:
-    type: sys11::floatport::v1
+    type: sys11::floatport::v3
     properties:
       public_net: { get_param: public_net_id }
-      internal_net: { get_attr: [ network, network ] }
+      internal_net: { get_resource: network }
+      security_groups: 
+        - { get_resource: allow_ssh }
 
 
   sensu-client:
@@ -150,10 +181,12 @@ resources:
       user_data_format: RAW
 
   sensu-client_port:
-    type: sys11::floatport::v1
+    type: sys11::floatport::v3
     properties:
       public_net: { get_param: public_net_id }
-      internal_net: { get_attr: [ network, network ] }
+      internal_net: { get_resource: network }
+      security_groups: 
+        - { get_resource: allow_ssh }
 
 
 outputs:
