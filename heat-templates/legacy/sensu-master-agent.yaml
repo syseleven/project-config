@@ -57,53 +57,45 @@ resources:
   ### Creates a Neutron network and subnet
 
   network:
-    type: sys11::network::v3
+    type: sys11::network::v2
     properties:
-      router: { get_resource: router }
       name:
         list_join:
           - '_'
           - [ heat, { get_param: 'OS::stack_name' } ]
 
   
-  # Creates a Neutron router for floating IPs and/or SNAT.
-
-  router:
-    type: OS::Neutron::Router
-    properties:
-      name:
-        list_join:
-          - '_'
-          - [ 'router', 'heat', { get_param: 'OS::stack_name' } ]
-      external_gateway_info:
-        network: { get_param: public_net_id }
-
-
-  ### Security group for SSH access from outside
-  #   (Add your own rule for allowing access to Uchiwa from outside or tunnel it
-  #    through SSH).
-
-  allow_ssh:
-    type: OS::Neutron::SecurityGroup
-    properties:
-      description: "Allow inbound SSH traffic"
-      name: allow ssh from anywhere
-      rules: 
-        - { direction: ingress, remote_ip_prefix: 0.0.0.0/0, protocol: tcp, port_range_min: 22, port_range_max: 22 }
- 
-
   ### Generates a user-data script that runs the Syseleven bootstrapping scripts
 
   bootstrap:
-    type: sys11::cloudstrap::v5
+    type: sys11::cloudstrap::v4
     properties:
       config_repo: { get_param: config_repo }
       config_branch: { get_param: config_branch }
       deploy_key: { get_param: deploy_key }
       override_yaml: { get_param: override_yaml }
 
+  ### Security group for allowing Uchiwa access (must be attached to Neutron port)
 
-  ### Sensu server
+  allow_uchiwa:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      description: "Allow access to Sensu's Uchiwa frontend from anywhere."
+      name: allow uchiwa
+      rules: 
+        - {direction: ingress, remote_ip_prefix: 0.0.0.0/0, port_range_min: 3001, port_range_max: 3001, protocol: tcp}
+
+  ### Security group for allowing ssh access (must be attached to Neutron port)
+  allow_ssh:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      description: "Allow access to sshd from anywhere."
+      name: allow ssh
+      rules:
+        - {direction: ingress, remote_ip_prefix: 0.0.0.0/0, port_range_min: 22, port_range_max: 22, protocol: tcp}
+
+
+  ### Puppet master
 
   puppetmaster:
     type: OS::Nova::Server
@@ -125,13 +117,17 @@ resources:
       user_data_format: RAW
 
   puppetmaster_port:
-    type: sys11::floatport::v3
+    type: sys11::floatport::v2
     properties:
       public_net: { get_param: public_net_id }
-      internal_net: { get_resource: network }
+      internal_net: { get_attr: [ network, network ] }
       security_groups: 
         - { get_resource: allow_ssh }
+        - { get_attr: [ network, security_group ]  }
 
+
+
+  ### Sensu Server
 
   sensu-server:
     type: OS::Nova::Server
@@ -153,12 +149,14 @@ resources:
       user_data_format: RAW
 
   sensu-server_port:
-    type: sys11::floatport::v3
+    type: sys11::floatport::v2
     properties:
       public_net: { get_param: public_net_id }
-      internal_net: { get_resource: network }
-      security_groups: 
+      internal_net: { get_attr: [ network, network ] }
+      security_groups:
         - { get_resource: allow_ssh }
+        - { get_resource: allow_uchiwa }
+        - { get_attr: [ network, security_group ]  }
 
 
   sensu-client:
@@ -181,12 +179,13 @@ resources:
       user_data_format: RAW
 
   sensu-client_port:
-    type: sys11::floatport::v3
+    type: sys11::floatport::v2
     properties:
       public_net: { get_param: public_net_id }
-      internal_net: { get_resource: network }
-      security_groups: 
+      internal_net: { get_attr: [ network, network ] }
+      security_groups:
         - { get_resource: allow_ssh }
+        - { get_attr: [ network, security_group ]  }
 
 
 outputs:

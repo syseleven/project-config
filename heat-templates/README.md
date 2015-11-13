@@ -5,6 +5,11 @@ This directory contains the following example heat templates:
 * 'sensu-masterless.yaml`: Deploys a Sensu server configured through masterless puppet.
 * 'sensu-master-agent.yaml`: Deploys a Puppet master, Sensu server and Sensu client (the latter receive their configuration from the Puppet master).
 
+These templates will only work on Syseleven's Beta cloud. During the transition
+period (i.e. between the Beta cloud going online and the Alpha cloud ceasing
+operations) you will find versions of these templates that work in Syseleven's
+Alpha cloud in the legacy/ directory.
+
 You can instantiate these stacks by issuing a
 
   `heat stack-create -f sensu-masterless.yaml -P key_name=<my_nova_keypair_name> -P deploy_key="$(cat <my_deploy_key>)" -P config_repo=<my_project-config_git_fork> sensu-masterless`
